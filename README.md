@@ -1,4 +1,4 @@
-Performance Optimization Demo (Python + MySQL + Redis)
+Performance Optimization Demo (Python + MySQL + Docker + Redis)
 
 This project demonstrates real-world application performance optimization using DevOps and backend best practices.
 It shows a measurable before-and-after comparison using load testing.
@@ -123,12 +123,3 @@ Load Test Results
 | p95 Latency       | ~434 ms   | ~8.3 ms   | **Massive reduction** |
 | Throughput        | ~36 req/s | ~49 req/s | **~36% increase**     |
 | Error Rate        | 0%        | 0%        | No regression         |
-
-Start Services:- 
-    docker-compose up -d --build
-
-Test API:-
-    curl http://localhost:5000/products
-
-Run Load Test:-
-    k6 run load.js
