@@ -88,22 +88,22 @@ Test Configuration
 
 **Key Learnings**
 
-Asynchronous processing slightly increases enqueue latency but massively improves scalability and reliability
+    Asynchronous processing slightly increases enqueue latency but massively improves scalability and reliability
 
-Tail latency matters more than average latency in production systems
+    Tail latency matters more than average latency in production systems
 
-depends_on ≠ service readiness → retries are essential
+    depends_on ≠ service readiness → retries are essential
 
-Celery task registration and isolation are critical
+    Celery task registration and isolation are critical
 
-Performance optimization is about system behavior under load, not just raw speed
+    Performance optimization is about system behavior under load, not just raw speed
 
 **Validation Outcome**
 
-All SLAs met under concurrent load
+    All SLAs met under concurrent load
 
-Zero request failures
+    Zero request failures
 
-Stable throughput (~49 RPS)
+    Stable throughput (~49 RPS)
 
-Improved tail latency and fault isolation
+    Improved tail latency and fault isolation
