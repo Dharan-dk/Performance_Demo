@@ -29,8 +29,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+
+  worker:
+    build: ./app
+    command: celery -A celery_app.celery worker --loglevel=info
+    depends_on:
+      redis:
+        condition: service_started
+      mysql:
+        condition: service_healthy

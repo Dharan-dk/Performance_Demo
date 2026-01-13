@@ -1,134 +1,109 @@
-Performance Optimization Demo (Python + MySQL + Redis)
+**Performance Optimization & Async Processing Demo**
 
-This project demonstrates real-world application performance optimization using DevOps and backend best practices.
-It shows a measurable before-and-after comparison using load testing.
+Flask · Redis · Celery · MySQL · Docker · k6
 
-Project Objective:
+**Overview**
 
-To identify performance bottlenecks in a backend application and improve:
+This project demonstrates how to design, optimize, and validate a backend system by moving from a synchronous architecture to an asynchronous, production-grade architecture using Celery and Redis.
 
-    1. API response time
+The goal was to:
 
-    2. Throughput (requests per second)
+    Improve API responsiveness under load
 
-    3. Stability under concurrent load
+    Isolate CPU and database-intensive work
 
-All improvements are validated using load testing metrics.
+    Maintain SLA guarantees under concurrent traffic
 
-Tech Stack:
-Application
+    Validate improvements using k6 load testing
 
-    * Python (Flask)
+**Architecture**
+Before (Synchronous)
 
-    * MySQL 8
+    Flask handled CPU-heavy + DB-heavy logic directly in request threads
 
-    * Redis (caching)
+    Fast at low load but risked thread blocking and poor scalability
 
-DevOps & Infrastructure
+After (Asynchronous)
 
-    * Docker & Docker Compose
+    Flask API enqueues heavy tasks to Celery
 
-    * Linux (Ubuntu)
+    Redis acts as message broker and result backend
 
-    * Container networking & health checks
+    Celery workers execute heavy jobs independently
 
-Testing & Validation
+    Redis cache used for read-heavy endpoints
 
-    * k6 (load testing)
+Key benefit: Request threads remain free, improving stability and scalability.
 
-Architecture Overview:
+**Tech Stack**
 
-Client
-  |
-  | HTTP
-  v
-Flask API (Docker)
-  |
-  | Cache lookup
-  v
-Redis (in-memory)
-  |
-  | Fallback (miss)
-  v
-MySQL Database
+ Component               | Purpose                     
+ ----------------------- | --------------------------- 
+ Flask                   | REST API                    
+ MySQL                   | Persistent storage          
+ Redis                   | Cache + Celery broker       
+ Celery                  | Async background processing 
+ Docker & Docker Compose | Containerized services      
+ k6                      | Load & SLA testing          
 
-Test Scenario:-
+ **API Endpoints**
 
-    Endpoint tested: GET /products
+  Endpoint          | Description                   
+ ------------------ | ----------------------------- 
+ `/health`          | Service health check          
+ `/products`        | Read-heavy API (Redis-cached) 
+ `/heavy-process`   | Enqueues CPU + DB heavy job   
+ `/job-status/<id>` | Tracks background task status 
 
-    Virtual users (VUs): 50
+**Async Flow (/heavy-process)**
 
-    Duration: 2 minutes
+    Client calls /heavy-process
 
-    Tool: k6
+    Flask immediately enqueues job to Redis
 
-    Same infrastructure for before & after tests
+    Celery worker picks up job
 
-Before Optimization (Baseline)
-Characteristics:
+    Worker executes CPU-heavy + DB logic
 
-    Every request hits MySQL
+    Result stored in Redis
 
-    No caching
+    Client polls /job-status/<id> for completion
 
-    Artificial delay simulating real-world slowness
+This decouples request handling from heavy computation.
 
-Load Test Results:
+**Performance Testing (k6)**
+Test Configuration
 
-    Average response time: ~363 ms
+    50 Virtual Users
 
-    p95 latency: ~434 ms
+    2 minutes duration
 
-    Throughput: ~36 requests/sec
+    SLA thresholds:
 
-    Errors: 0%
+        Heavy endpoint p95 < 100 ms
 
-Issues Identified:
+        Products endpoint p95 < 50 ms
 
-    Database was the primary bottleneck
+        Error rate < 1%
 
-    Repeated identical queries
+**Key Learnings**
 
-    Poor scalability under load
+Asynchronous processing slightly increases enqueue latency but massively improves scalability and reliability
 
-Optimization Applied:
-Improvements Made
+Tail latency matters more than average latency in production systems
 
-    Introduced Redis caching
+depends_on ≠ service readiness → retries are essential
 
-    Reduced database calls drastically
+Celery task registration and isolation are critical
 
-    Ensured proper container startup ordering with health checks
+Performance optimization is about system behavior under load, not just raw speed
 
-    Kept infrastructure unchanged (cost-efficient)
+**Validation Outcome**
 
-Key Principle:-
+All SLAs met under concurrent load
 
-    Cache frequently accessed, read-heavy data to reduce database load.
+Zero request failures
 
-After Optimization (Improved)
-Load Test Results
+Stable throughput (~49 RPS)
 
-    Average response time: ~8.9 ms
-
-    p95 latency: ~8.3 ms
-
-    Throughput: ~49 requests/sec
-
-    Errors: 0%
-
-| Metric            | Before    | After     | Improvement           |
-| ----------------- | --------- | --------- | --------------------- |
-| Avg Response Time | ~363 ms   | ~8.9 ms   | **~40× faster**       |
-| p95 Latency       | ~434 ms   | ~8.3 ms   | **Massive reduction** |
-| Throughput        | ~36 req/s | ~49 req/s | **~36% increase**     |
-| Error Rate        | 0%        | 0%        | No regression         |
-
-Start Services:- 
-    docker-compose up -d --build
-
-Test API:-
-    curl http://localhost:5000/products
-
-Run Load Test:-
-    k6 run load.js
+Improved tail latency and fault isolation
