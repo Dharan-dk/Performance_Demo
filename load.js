@@ -14,11 +14,11 @@ export let options = {
 
 export default function () {
   if (Math.random() < 0.7) {
-    http.get('http://localhost:5000/products', {
+    http.get('http://localhost/products', {
       tags: { endpoint: 'products' }
     });
   } else {
-    http.get('http://localhost:5000/heavy-process', {
+    http.get('http://localhost/heavy-process', {
       tags: { endpoint: 'heavy' }
     });
   }
